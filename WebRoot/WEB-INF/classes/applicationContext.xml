@@ -1,0 +1,60 @@
+﻿<?xml version="1.0" encoding="UTF-8" ?>
+<beans xmlns="http://www.springframework.org/schema/beans" xmlns:tx="http://www.springframework.org/schema/tx" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:p="http://www.springframework.org/schema/p" xmlns:context="http://www.springframework.org/schema/context" xmlns:aop="http://www.springframework.org/schema/aop"
+	xsi:schemaLocation="http://www.springframework.org/schema/beans
+    http://www.springframework.org/schema/beans/spring-beans-3.0.xsd
+    http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context-3.0.xsd
+    http://www.springframework.org/schema/aop http://www.springframework.org/schema/aop/spring-aop-3.0.xsd
+        http://www.springframework.org/schema/tx
+        http://www.springframework.org/schema/tx/spring-tx-3.0.xsd
+    ">
+	<!-- 扫描service组件 -->
+	<context:component-scan base-package="com.yhq.service" />
+	<!-- 分解配置 jdbc.properites -->
+	<context:property-placeholder location="classpath:jdbc.properties" />
+
+	<!-- 数据源 -->
+	<bean id="dataSource" class="org.apache.commons.dbcp.BasicDataSource">
+		<property name="driverClassName" value="${driver}" />
+		<property name="url" value="${url}" />
+		<property name="username" value="${user}" />
+		<property name="password" value="${password}" />
+		<property name="poolPreparedStatements" value="true" />
+		<property name="maxActive" value="500" />
+		<property name="removeAbandoned" value="false" />
+		<property name="defaultAutoCommit" value="true" />
+		<property name="validationQuery">
+			<value>select CURRENT_DATE</value>
+		</property>
+		<property name="timeBetweenEvictionRunsMillis">
+			<value>1200000</value>
+		</property>
+	</bean>
+
+	<bean id="iddatasource" class="org.springframework.jdbc.datasource.TransactionAwareDataSourceProxy">
+		<constructor-arg index="0">
+			<ref local="dataSource" />
+		</constructor-arg>
+	</bean>
+
+	<bean id="idtransactionManager" class="org.springframework.jdbc.datasource.DataSourceTransactionManager">
+		<property name="dataSource">
+			<ref local="iddatasource" />
+		</property>
+	</bean>
+
+	<bean id="sqlSessionFactory" class="org.mybatis.spring.SqlSessionFactoryBean">
+		<property name="dataSource" ref="dataSource" />
+		<!-- 加载mybatis-config.xml配置文件 -->
+		<property name="configLocation" value="classpath:mybatis-config.xml" />
+		<!-- 加载mapper文件 -->
+		<property name="mapperLocations" value="classpath:com/yhq/mapper/*.xml" />
+		<!-- 加载pojo实体类 -->
+		<property name="typeAliasesPackage" value="com.yhq.pojo" />
+	</bean>
+
+	<!-- 使用MapperScannerConfigurer来帮我们自动扫描和注册Mapper接口 -->
+	<bean class="org.mybatis.spring.mapper.MapperScannerConfigurer">
+		<property name="annotationClass" value="org.springframework.stereotype.Repository" />
+		<property name="basePackage" value="com.yhq.dao" />
+	</bean>
+</beans>
